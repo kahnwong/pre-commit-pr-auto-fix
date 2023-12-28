@@ -1,0 +1,28 @@
+---
+name: pre-commit
+on:
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install pre-commit
+        run: pipx install pre-commit
+      - name: Cache pre-commit modules
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.OS }}-pre-commit-cache-${{ hashFiles('.pre-commit-config.yaml') }}
+          path: ~/.cache/pre-commit
+      - name: Run pre-commit
+        continue-on-error: true
+        run: |
+          pre-commit install
+          pre-commit run --all-files
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
